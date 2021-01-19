@@ -1,0 +1,100 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>In Stock Notifier</title>
+  <link rel="manifest" href="/manifest.json" />
+  <style type="text/css">
+    fieldset {
+      border: none;
+      background: #fafafa;
+    }
+    input, textarea {
+      border: 1px solid #555;
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0 0 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>In Stock Notfier</h1>
+  <fieldset>
+    <input type="text" id="push-title" placeholder="input push title..."><br>
+    <textarea id="push-body" placeholder="input push message..."></textarea><br>
+    <button id="btn-push">Test Notification</button>
+  </fieldset>
+  <script>
+    window.vapidPublicKey = new Uint8Array(<%= Base64.urlsafe_decode64(public_key).bytes %>)
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await navigator.serviceWorker.register('/serviceworker.js')
+
+      if (await getWebPushData()){
+        // Already subscribed but go ahead and send it to backend again
+        saveSubscription()
+      } else {
+        const sw = await navigator.serviceWorker.ready
+        await sw.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: window.vapidPublicKey
+        })
+        saveSubscription()
+      }
+    })
+
+    async function getWebPushData() {
+      const sw = await navigator.serviceWorker.ready
+      const subscription = await sw.pushManager.getSubscription()
+      return subscription ? subscription.toJSON() : null
+    }
+
+    async function saveSubscription() {
+      const data = await getWebPushData()
+      if (data) {
+        console.log(data)
+        const payload = {
+          endpoint: data.endpoint,
+          p256dh: data.keys.p256dh,
+          auth: data.keys.auth
+        }
+        const method = 'POST'
+        const body = JSON.stringify(payload)
+        const headers = {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+        fetch('/subscribe', { method, headers, body })
+      }
+    }
+
+    document.getElementById('btn-push').addEventListener('click', async () => {
+      const data = await getWebPushData()
+      if (!data) {
+        alert('PushNotification not allowed')
+        return
+      }
+      const payload = {
+        message: {
+          title: document.getElementById('push-title').value,
+          body: document.getElementById('push-body').value
+        },
+        endpoint: data.endpoint,
+        p256dh: data.keys.p256dh,
+        auth: data.keys.auth
+      }
+      const method = 'POST'
+      const body = JSON.stringify(payload)
+      const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+      fetch('/push', { method, headers, body })
+    })
+  </script>
+</body>
+</html>
