@@ -10,7 +10,7 @@ GEM
     nio4r (2.5.4)
     puma (5.1.1)
       nio4r (~> 2.0)
-    rack (2.2.3)
+    rack (2.2.8)
     rack-protection (2.1.0)
       rack
     redis (4.2.5)
@@ -31,6 +31,7 @@ GEM
 
 PLATFORMS
   x86_64-darwin-19
+  x86_64-linux
 
 DEPENDENCIES
   dotenv (~> 2.7)
