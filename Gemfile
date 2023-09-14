@@ -14,6 +14,6 @@ gem "webpush", "~> 1.1"
 
 gem "dotenv", "~> 2.7", groups: [:development, :test]
 
-gem "sidekiq", "~> 6.4"
+gem "sidekiq", "~> 7.1"
 
 gem "redis", "~> 4.2"
